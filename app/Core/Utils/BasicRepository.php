@@ -9,84 +9,85 @@ use Illuminate\Support\Collection;
 
 abstract class BasicRepository
 {
-   protected $saveForceCreateIfHasKeyValue = false;
+    protected $saveForceCreateIfHasKeyValue = false;
 
-   protected abstract function getEntityInstance(): Model;
+    protected abstract function getEntityInstance(): Model;
 
-   protected function __byKey($key): ?Model
-   {
-      return $this->getEntityInstance()->find($key);
-   }
+    protected function __byKey($key): ?Model
+    {
+        return $this->getEntityInstance()->find($key);
+    }
 
-   protected function __save(array $data): ?Model
-   {
-      $entity = $this->getEntityInstance();
+    protected function __save(array $data): ?Model
+    {
+        $entity = $this->getEntityInstance();
 
-      if (!empty($data[$this->getEntityKeyName()])) {
-         $entityFound = $this->__byKey($data[$this->getEntityKeyName()]);
+        if( ! empty($data[$this->getEntityKeyName()]))
+        {
+            $entityFound = $this->__byKey($data[$this->getEntityKeyName()]);
 
-         if (!is_null($entityFound) || !$this->saveForceCreateIfHasKeyValue)
-            $entity = $entityFound;
-      }
+            if( ! is_null($entityFound) || ! $this->saveForceCreateIfHasKeyValue)
+                $entity = $entityFound;
+        }
 
-      return $entity->fill($data)->save() ? $entity : NULL;
-   }
+        return $entity->fill($data)->save() ? $entity : NULL;
+    }
 
-   protected function __updateByKey($key, array $data): ?Model
-   {
-      $data[$this->getEntityKeyName()] = $key;
+    protected function __updateByKey($key, array $data): ?Model
+    {
+        $data[$this->getEntityKeyName()] = $key;
 
-      return $this->__save($data);
-   }
+        return $this->__save($data);
+    }
 
-   protected function getEntityKeyName(): string
-   {
-      return $this->getEntityInstance()->getKeyName();
-   }
+    protected function getEntityKeyName(): string
+    {
+        return $this->getEntityInstance()->getKeyName();
+    }
 
-   protected function __create(array $data): ?Model
-   {
-      $model = $this->getEntityInstance();
+    protected function __create(array $data): ?Model
+    {
+        $model = $this->getEntityInstance();
 
-      if ($model->fill($data)->save())
-         return $model;
+        if($model->fill($data)->save())
+            return $model;
 
-      return NULL;
-   }
+        return NULL;
+    }
 
-   protected function __byColumn(string $column, $value): ?Model
-   {
-      return $this->getEntityInstance()->where($column, $value)->first();
-   }
+    protected function __byColumn(string $column, $value): ?Model
+    {
+        return $this->getEntityInstance()->where($column, $value)->first();
+    }
 
-   protected function __allWhere(string $column, $value): Collection
-   {
-      return $this->getEntityInstance()->where($column, $value)->get();
-   }
+    protected function __allWhere(string $column, $value): Collection
+    {
+        return $this->getEntityInstance()->where($column, $value)->get();
+    }
 
-   protected function __all(): Collection
-   {
-      return $this->getEntityInstance()->all();
-   }
+    protected function __all(): Collection
+    {
+        return $this->getEntityInstance()->all();
+    }
 
-   protected function __limitedList(int $limit): Collection
-   {
-      return $this->getEntityInstance()->limit($limit)->get();
-   }
+    protected function __limitedList(int $limit): Collection
+    {
+        return $this->getEntityInstance()->limit($limit)->get();
+    }
 
-   protected function __delete($key): bool
-   {
-      if ($model = $this->__byKey($key))
-         return $model->delete();
+    protected function __delete($key): bool
+    {
+        if($model = $this->__byKey($key))
+            return $model->delete();
 
-      return FALSE;
-   }
+        return FALSE;
+    }
 
-   protected function qbApplyFilters(array $filters, Builder $builder = null): Builder
-   {
-      return app(Pipeline::class)
-         ->send($builder ?? $this->getEntityInstance()->query())
-         ->through($filters)
-         ->thenReturn();
-   }
+    protected function qbApplyFilters(array $filters, Builder $builder = null): Builder
+    {
+        return app(Pipeline::class)
+            ->send($builder ?? $this->getEntityInstance()->query())
+            ->through($filters)
+            ->thenReturn();
+    }
 }
